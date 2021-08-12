@@ -1,9 +1,8 @@
 import { unified } from 'unified'
-import { readSync } from 'to-vfile'
 import rehypeParse from 'rehype-parse'
 import { Parent, Root, Element } from 'hast';
 import { ValuesType } from 'utility-types';
-import { readdirSync } from 'fs';
+import { readdirSync, readFileSync } from 'fs';
 import path from 'path';
 
 const scriptArguments = process.argv.slice(2);
@@ -43,7 +42,7 @@ function main() {
       const htmlFiles = getAllHTMLFiles(parentFolderPath);
 
       const children = htmlFiles.map(filePath => {
-        const htmlFile = readSync(filePath)
+        const htmlFile = readFileSync(filePath)
 
         const ast = unified()
           .use(rehypeParse, { fragment: true })

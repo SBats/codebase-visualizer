@@ -12,7 +12,6 @@
   "license": "ISC",
   "dependencies": {
     "rehype-parse": "^8.0.2",
-    "to-vfile": "^7.2.1",
     "ts-node": "^10.2.0",
     "unified": "^10.1.0",
     "utility-types": "^3.10.0"
