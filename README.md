@@ -14,8 +14,8 @@ Output:
 ``` json
 [
     {
-        "tagName": string,
-        "className": string
+        "tagName": "string",
+        "className": "string"
     }
 ]
 ```
