@@ -1,0 +1,23 @@
+{
+  "name": "vizualisator",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.ts",
+  "type": "module",
+  "scripts": {
+    "start": "node --loader ts-node/esm get_html_children.ts",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "rehype-parse": "^8.0.2",
+    "to-vfile": "^7.2.1",
+    "ts-node": "^10.2.0",
+    "unified": "^10.1.0",
+    "utility-types": "^3.10.0"
+  },
+  "devDependencies": {
+    "@types/node": "^16.6.0"
+  }
+}
