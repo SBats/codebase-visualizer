@@ -8,7 +8,7 @@ import path from 'path';
 const scriptArguments = process.argv.slice(2);
 const parentFolderPath = scriptArguments[0];
 
-type flattenNode = { tagName: string; className: string };
+type FlattenNode = { tagName: string; className: string };
 
 function isHTMLFile(fileName: string): boolean {
   return fileName.split('.').reverse()[0] === 'html';
@@ -24,7 +24,7 @@ function getAllHTMLFiles(folderPath: string): string[] {
   });
 }
 
-function simplifyChild(node: Element): flattenNode {
+function simplifyChild(node: Element): FlattenNode {
   return {
     tagName: node.tagName,
     className: JSON.stringify(node.properties?.className),
@@ -33,14 +33,14 @@ function simplifyChild(node: Element): flattenNode {
 
 function getFlatenNodeChildren(
   node: ValuesType<Parent['children']>
-): Array<flattenNode> {
+): Array<FlattenNode> {
   if (node.type !== 'element') return [];
   return [simplifyChild(node)].concat(
     node.children?.flatMap(getFlatenNodeChildren) || []
   );
 }
 
-function getFlatenTreeChildren(tree: Root): Array<flattenNode> {
+function getFlatenTreeChildren(tree: Root): Array<FlattenNode> {
   return tree.children.flatMap(getFlatenNodeChildren);
 }
 
