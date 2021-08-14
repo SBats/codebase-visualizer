@@ -1,21 +1,24 @@
 # Codebase Visualizer
 
 ## Scripts
+
 **Get HTML children**
 
 For a given `FolderPath`, parse all html files in this folder and its sub-folders, and extract all html elements.
 
 Command:
-``` bash
+
+```bash
 npm run html-children -- $FOLDER_PATH
 ```
 
 Output:
-``` json
+
+```json
 [
-    {
-        "tagName": "string",
-        "className": "string"
-    }
+  {
+    "tagName": "string",
+    "className": "string"
+  }
 ]
 ```
