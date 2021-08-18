@@ -7,7 +7,7 @@
   "scripts": {
     "html-children": "node --loader ts-node/esm get_html_children.ts",
     "ng1-components": "node --loader ts-node/esm get_ng1_components.ts",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "jest"
   },
   "author": "",
   "license": "ISC",
@@ -19,6 +19,7 @@
     "utility-types": "^3.10.0"
   },
   "devDependencies": {
+    "@types/jest": "^27.0.1",
     "@types/node": "^16.6.0",
     "@typescript-eslint/eslint-plugin": "^4.29.1",
     "@typescript-eslint/parser": "^4.29.1",
@@ -26,6 +27,8 @@
     "eslint-config-airbnb-typescript": "^12.3.1",
     "eslint-config-prettier": "^8.3.0",
     "eslint-plugin-import": "^2.24.0",
-    "prettier": "2.3.2"
+    "jest": "^27.0.6",
+    "prettier": "2.3.2",
+    "ts-jest": "^27.0.5"
   }
 }
