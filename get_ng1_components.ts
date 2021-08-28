@@ -14,7 +14,7 @@ function main() {
       const source = tsFile.getSourceFile(filePath);
       if (!source) throw new Error(`Cannot find file ${filePath}`);
 
-      return extractComponentNodeFromAngularDeclaration(source);
+      return extractComponentNodeFromAngularDeclaration(source, filePath);
     });
     console.log(JSON.stringify(components));
   } catch (e) {

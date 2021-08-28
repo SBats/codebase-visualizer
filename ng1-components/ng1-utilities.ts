@@ -1,3 +1,4 @@
+import path from 'path';
 import ts from 'typescript';
 import { findReturnNodes, getFileContentFromSource } from '../utilities/ast';
 
@@ -8,7 +9,7 @@ enum TemplateType {
 
 type TemplateDefinition = {
   type: TemplateType;
-  content?: string;
+  content: string;
 };
 
 type ComponentInfo = {
@@ -52,13 +53,14 @@ export function findTemplatePathFromImport(
       const identifier = parts
         .find(part => part.kind === ts.SyntaxKind.ImportClause)
         ?.getText(source);
-      const path = parts
+      const templatePath = parts
         .find(part => part.kind === ts.SyntaxKind.StringLiteral)
         ?.getText(source)
         .replaceAll("'", '');
-      return { identifier, path };
+      return { identifier, templatePath };
     });
-  return imports.find(fileImport => fileImport.identifier === importName)?.path;
+  return imports.find(fileImport => fileImport.identifier === importName)
+    ?.templatePath;
 }
 
 export function extractTemplateFromAngularDeclaration(
@@ -101,10 +103,11 @@ export function extractTemplateFromAngularDeclaration(
           // Build template file path based on import name and file being processed
           templates.push({
             type: TemplateType.FILE_REF,
-            content: findTemplatePathFromImport(
-              (templateValue as ts.Identifier).getText(source),
-              source
-            ),
+            content:
+              findTemplatePathFromImport(
+                (templateValue as ts.Identifier).getText(source),
+                source
+              ) || '',
           });
           break;
         case ts.SyntaxKind.ArrayLiteralExpression:
@@ -116,10 +119,11 @@ export function extractTemplateFromAngularDeclaration(
             if (returnIdentifier) {
               templates.push({
                 type: TemplateType.FILE_REF,
-                content: findTemplatePathFromImport(
-                  returnIdentifier.getText(source),
-                  source
-                ),
+                content:
+                  findTemplatePathFromImport(
+                    returnIdentifier.getText(source),
+                    source
+                  ) || '',
               });
             }
           });
@@ -141,9 +145,11 @@ export function extractTemplateFromAngularDeclaration(
 }
 
 export function extractComponentNodeFromAngularDeclaration(
-  source: ts.SourceFile
+  source: ts.SourceFile,
+  filePath: string
 ): ComponentInfo[] {
   const content = getFileContentFromSource(source);
+  const folderPath = path.dirname(filePath);
 
   const componentsDeclarations = content
     .getChildren(source)
@@ -155,7 +161,16 @@ export function extractComponentNodeFromAngularDeclaration(
     const name = getComponentNameIfComponent(node, source);
 
     if (name) {
-      const templates = extractTemplateFromAngularDeclaration(node, source);
+      const templates = extractTemplateFromAngularDeclaration(node, source).map(
+        template => {
+          if (template.type === TemplateType.FILE_REF)
+            return {
+              type: template.type,
+              content: path.join(folderPath, template.content),
+            };
+          return template;
+        }
+      );
       componentsNode.push({ name, templates });
     }
 
