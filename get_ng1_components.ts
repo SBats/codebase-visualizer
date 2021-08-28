@@ -1,9 +1,11 @@
 import ts from 'typescript';
+import P from 'pino';
 import { extractComponentNodeFromAngularDeclaration } from './utilities/ng1';
 import getAllFilesOfType from './utilities/system';
 
 const scriptArguments = process.argv.slice(2);
 const parentFolderPath = scriptArguments[0];
+const logger = P();
 
 function main() {
   try {
@@ -16,9 +18,9 @@ function main() {
 
       return extractComponentNodeFromAngularDeclaration(source, filePath);
     });
-    console.log(JSON.stringify(components));
+    logger.info(components);
   } catch (e) {
-    console.error(e);
+    logger.error(e);
   }
 }
 
