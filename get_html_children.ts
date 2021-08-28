@@ -2,27 +2,13 @@ import { unified } from 'unified';
 import rehypeParse from 'rehype-parse';
 import { Parent, Root, Element } from 'hast';
 import { ValuesType } from 'utility-types';
-import { readdirSync, readFileSync } from 'fs';
-import path from 'path';
+import { readFileSync } from 'fs';
+import getAllFilesOfType from './utilities/system';
 
 const scriptArguments = process.argv.slice(2);
 const parentFolderPath = scriptArguments[0];
 
 type FlattenNode = { tagName: string; className: string };
-
-function isHTMLFile(fileName: string): boolean {
-  return fileName.split('.').reverse()[0] === 'html';
-}
-
-function getAllHTMLFiles(folderPath: string): string[] {
-  const entries = readdirSync(folderPath, { withFileTypes: true });
-  return entries.flatMap(entry => {
-    const filePath = path.resolve(folderPath, entry.name);
-    if (entry.isDirectory()) return getAllHTMLFiles(filePath);
-    if (isHTMLFile(entry.name)) return filePath;
-    return [];
-  });
-}
 
 function simplifyChild(node: Element): FlattenNode {
   return {
@@ -46,7 +32,7 @@ function getFlatenTreeChildren(tree: Root): Array<FlattenNode> {
 
 function main() {
   try {
-    const htmlFiles = getAllHTMLFiles(parentFolderPath);
+    const htmlFiles = getAllFilesOfType(parentFolderPath, 'html');
 
     const children = htmlFiles.map(filePath => {
       const htmlFile = readFileSync(filePath);
