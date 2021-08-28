@@ -3,13 +3,13 @@ import {
   findNodesOfKind,
   findReturnNodes,
   getFileContentFromSource,
-} from './utilities';
-import multiReturnAST from './fixtures/multi-return.ast';
+} from './ast';
+import multiReturnFixture from '../fixtures/multi-return';
 
 test('Find 1 Block statement', () => {
   const sourceFile = ts.createSourceFile(
     'MultiReturnTestFile',
-    multiReturnAST,
+    multiReturnFixture,
     ts.ScriptTarget.ESNext
   );
   const node = getFileContentFromSource(sourceFile);
@@ -19,7 +19,7 @@ test('Find 1 Block statement', () => {
 test('Find 2 Return statements', () => {
   const sourceFile = ts.createSourceFile(
     'MultiReturnTestFile',
-    multiReturnAST,
+    multiReturnFixture,
     ts.ScriptTarget.ESNext
   );
   const node = getFileContentFromSource(sourceFile);
