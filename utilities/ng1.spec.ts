@@ -2,12 +2,12 @@ import ts from 'typescript';
 import {
   extractTemplateFromAngularDeclaration,
   findTemplatePathFromImport,
-} from './ng1-utilities';
+} from './ng1';
 import importsFixture from '../fixtures/imports';
 import templateStringFixture from '../fixtures/template-string';
 import templateFunctionFixture from '../fixtures/template-function';
 import templateIdentifierFixture from '../fixtures/template-identifier';
-import { getFileContentFromSource } from '../utilities/ast';
+import { getFileContentFromSource } from './ast';
 
 describe('findTemplatePathFromImport', () => {
   test('Find a relative path', () => {

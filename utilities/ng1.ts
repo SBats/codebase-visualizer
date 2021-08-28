@@ -1,6 +1,11 @@
 import path from 'path';
 import ts from 'typescript';
-import { findReturnNodes, getFileContentFromSource } from '../utilities/ast';
+import {
+  getHtmlChildrenOfFile,
+  FlattenNode,
+  getHtmlChildrenOfString,
+} from './html';
+import { findReturnNodes, getFileContentFromSource } from './ast';
 
 enum TemplateType {
   FILE_REF = 0,
@@ -14,7 +19,7 @@ type TemplateDefinition = {
 
 type ComponentInfo = {
   name: string;
-  templates: Array<TemplateDefinition>;
+  childElements: Array<FlattenNode>;
 };
 
 export function getComponentNameIfComponent(
@@ -161,17 +166,15 @@ export function extractComponentNodeFromAngularDeclaration(
     const name = getComponentNameIfComponent(node, source);
 
     if (name) {
-      const templates = extractTemplateFromAngularDeclaration(node, source).map(
-        template => {
-          if (template.type === TemplateType.FILE_REF)
-            return {
-              type: template.type,
-              content: path.join(folderPath, template.content),
-            };
-          return template;
-        }
-      );
-      componentsNode.push({ name, templates });
+      const childElements = extractTemplateFromAngularDeclaration(
+        node,
+        source
+      ).flatMap(template => {
+        if (template.type === TemplateType.FILE_REF)
+          return getHtmlChildrenOfFile(path.join(folderPath, template.content));
+        return getHtmlChildrenOfString(template.content);
+      });
+      componentsNode.push({ name, childElements });
     }
 
     return componentsNode;

@@ -1,5 +1,5 @@
 import ts from 'typescript';
-import { extractComponentNodeFromAngularDeclaration } from './ng1-components/ng1-utilities';
+import { extractComponentNodeFromAngularDeclaration } from './utilities/ng1';
 import getAllFilesOfType from './utilities/system';
 
 const scriptArguments = process.argv.slice(2);
