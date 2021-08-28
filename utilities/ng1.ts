@@ -141,7 +141,6 @@ export function extractTemplateFromAngularDeclaration(
           });
           break;
         default:
-          console.error('Unknown kind');
       }
       return templates;
     },
