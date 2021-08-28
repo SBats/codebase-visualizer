@@ -5,8 +5,8 @@
   "main": "index.ts",
   "type": "module",
   "scripts": {
-    "html-children": "node --loader ts-node/esm get_html_children.ts",
-    "ng1-components": "node --loader ts-node/esm get_ng1_components.ts",
+    "html-children": "node --loader ts-node/esm --experimental-specifier-resolution=node get_html_children.ts",
+    "ng1-components": "node --loader ts-node/esm --experimental-specifier-resolution=node get_ng1_components.ts",
     "test": "jest"
   },
   "author": "",
