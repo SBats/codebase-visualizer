@@ -13,10 +13,11 @@ export function findNodesOfKind<T extends ts.SyntaxKind>(
 ): Array<ts.Node> {
   const children = node.getChildren(sourceFile);
   return children.flatMap(child => {
-    if (child.kind === kind) return child;
+    let result = [];
+    if (child.kind === kind) result.push(child);
     if (child.getChildCount(sourceFile) > 0)
-      return findNodesOfKind(child, kind, sourceFile);
-    return [];
+      result = result.concat(findNodesOfKind(child, kind, sourceFile));
+    return result;
   });
 }
 
