@@ -7,6 +7,7 @@
   "scripts": {
     "html-children": "node --loader ts-node/esm --experimental-specifier-resolution=node get_html_children.ts",
     "ng1-components": "node --loader ts-node/esm --experimental-specifier-resolution=node get_ng1_components.ts",
+    "ng1-routes": "node --loader ts-node/esm --experimental-specifier-resolution=node get_ng1_routes.ts",
     "test": "jest"
   },
   "author": "",

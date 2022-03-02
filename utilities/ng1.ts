@@ -5,7 +5,14 @@ import {
   FlattenNode,
   getHtmlChildrenOfString,
 } from './html';
-import { findReturnNodes, getFileContentFromSource } from './ast';
+import {
+  findIdentifiers,
+  findImportDeclarations,
+  findObjectLiteralExpressions,
+  findPropertyAssignments,
+  findReturnNodes,
+  getFileContentFromSource,
+} from './ast';
 
 enum TemplateType {
   FILE_REF = 0,
@@ -15,6 +22,11 @@ enum TemplateType {
 type TemplateDefinition = {
   type: TemplateType;
   content: string;
+};
+
+type RouteInfo = {
+  url: string;
+  childElements: Array<FlattenNode>;
 };
 
 type ComponentInfo = {
@@ -180,4 +192,92 @@ export function extractComponentNodeFromAngularDeclaration(
   }, [] as ComponentInfo[]);
 
   return components;
+}
+
+export function extractComponentsFromAngularRoute(
+  source: ts.SourceFile,
+  filePath: string
+): RouteInfo[] {
+  const content = getFileContentFromSource(source);
+  const folderPath = path.dirname(filePath);
+
+  const routesDeclarations = findObjectLiteralExpressions(content, source)
+    .filter(expression =>
+      findPropertyAssignments(expression, source).find(
+        assignment =>
+          ts.isIdentifier(assignment.name) &&
+          assignment.name.escapedText === 'url'
+      )
+    )
+    .map(expression => {
+      const urlAssignment = findPropertyAssignments(expression, source).find(
+        assignment =>
+          ts.isIdentifier(assignment.name) &&
+          assignment.name.escapedText === 'url'
+      );
+      const url = urlAssignment
+        ?.getChildren(source)
+        .find(child => ts.isStringLiteral(child))
+        ?.getFullText(source);
+
+      const templateAssignment = findPropertyAssignments(
+        expression,
+        source
+      ).find(
+        assignment =>
+          ts.isIdentifier(assignment.name) &&
+          assignment.name.escapedText === 'template'
+      );
+
+      const templateValue = templateAssignment
+        ?.getChildren(source)
+        .find(
+          child =>
+            ts.isStringLiteral(child) ||
+            ts.isNoSubstitutionTemplateLiteral(child) ||
+            ts.isTemplateExpression(child) ||
+            (ts.isIdentifier(child) && child.getText(source) !== 'template')
+        );
+
+      let template;
+
+      // Reference to html file
+      if (templateValue && ts.isIdentifier(templateValue)) {
+        const templateImport = findImportDeclarations(content, source).find(
+          declaration =>
+            findIdentifiers(declaration, source).find(
+              identifier =>
+                identifier.getText(source) === templateValue.getText(source)
+            )
+        );
+        const templatePath = templateImport
+          ?.getChildren(source)
+          .find(child => ts.isStringLiteral(child))
+          ?.getText(source)
+          .replaceAll("'", '');
+
+        template = {
+          content: templatePath,
+          type: TemplateType.FILE_REF,
+        };
+
+        // Inline Template
+      } else {
+        template = {
+          content: templateValue?.getFullText(source),
+          type: TemplateType.TEMPLATE_STRING,
+        };
+      }
+
+      return { url, template };
+    });
+
+  return routesDeclarations.flatMap(route => {
+    if (!route.url || !route.template.content) return [];
+    const childElements =
+      route.template.type === TemplateType.FILE_REF
+        ? getHtmlChildrenOfFile(path.join(folderPath, route.template.content))
+        : getHtmlChildrenOfString(route.template.content);
+    return { url: route.url, childElements };
+  });
 }
