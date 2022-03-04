@@ -20,7 +20,7 @@ function main() {
     });
     logger.info(components);
   } catch (e) {
-    logger.error(e);
+    logger.error(e as string);
   }
 }
 

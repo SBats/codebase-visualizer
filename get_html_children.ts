@@ -14,7 +14,7 @@ function main() {
     logger.info(htmlFiles);
     logger.info(children);
   } catch (e) {
-    logger.error(e);
+    logger.error(e as string);
   }
 }
 
