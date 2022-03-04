@@ -5,14 +5,7 @@ import {
   FlattenNode,
   getHtmlChildrenOfString,
 } from './html';
-import {
-  findIdentifiers,
-  findImportDeclarations,
-  findObjectLiteralExpressions,
-  findPropertyAssignments,
-  findReturnNodes,
-  getFileContentFromSource,
-} from './ast';
+import { findNodesOfKind, getFileContentFromSource } from './ast';
 
 enum TemplateType {
   FILE_REF = 0,
@@ -129,7 +122,11 @@ export function extractTemplateFromAngularDeclaration(
           break;
         case ts.SyntaxKind.ArrayLiteralExpression:
           // Find returns and for each build a template
-          findReturnNodes(templateValue, source).forEach(returnNode => {
+          findNodesOfKind(
+            templateValue,
+            ts.SyntaxKind.ReturnStatement,
+            source
+          ).forEach(returnNode => {
             const returnIdentifier = returnNode
               .getChildren(source)
               .find(child => child.kind === ts.SyntaxKind.Identifier);
@@ -201,16 +198,28 @@ export function extractComponentsFromAngularRoute(
   const content = getFileContentFromSource(source);
   const folderPath = path.dirname(filePath);
 
-  const routesDeclarations = findObjectLiteralExpressions(content, source)
+  const routesDeclarations = findNodesOfKind(
+    content,
+    ts.SyntaxKind.ObjectLiteralExpression,
+    source
+  )
     .filter(expression =>
-      findPropertyAssignments(expression, source).find(
+      findNodesOfKind(
+        expression,
+        ts.SyntaxKind.PropertyAssignment,
+        source
+      ).find(
         assignment =>
           ts.isIdentifier(assignment.name) &&
           assignment.name.escapedText === 'url'
       )
     )
     .map(expression => {
-      const urlAssignment = findPropertyAssignments(expression, source).find(
+      const urlAssignment = findNodesOfKind(
+        expression,
+        ts.SyntaxKind.PropertyAssignment,
+        source
+      ).find(
         assignment =>
           ts.isIdentifier(assignment.name) &&
           assignment.name.escapedText === 'url'
@@ -220,8 +229,9 @@ export function extractComponentsFromAngularRoute(
         .find(child => ts.isStringLiteral(child))
         ?.getFullText(source);
 
-      const templateAssignment = findPropertyAssignments(
+      const templateAssignment = findNodesOfKind(
         expression,
+        ts.SyntaxKind.PropertyAssignment,
         source
       ).find(
         assignment =>
@@ -243,12 +253,15 @@ export function extractComponentsFromAngularRoute(
 
       // Reference to html file
       if (templateValue && ts.isIdentifier(templateValue)) {
-        const templateImport = findImportDeclarations(content, source).find(
-          declaration =>
-            findIdentifiers(declaration, source).find(
-              identifier =>
-                identifier.getText(source) === templateValue.getText(source)
-            )
+        const templateImport = findNodesOfKind(
+          content,
+          ts.SyntaxKind.ImportDeclaration,
+          source
+        ).find(declaration =>
+          findNodesOfKind(declaration, ts.SyntaxKind.Identifier, source).find(
+            identifier =>
+              identifier.getText(source) === templateValue.getText(source)
+          )
         );
         const templatePath = templateImport
           ?.getChildren(source)

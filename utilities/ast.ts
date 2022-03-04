@@ -6,11 +6,50 @@ export function getFileContentFromSource(source: ts.SourceFile): ts.Node {
     .filter(node => node.kind === ts.SyntaxKind.SyntaxList)[0];
 }
 
-export function findNodesOfKind<T extends ts.SyntaxKind>(
+// type KindToNodeMapping = {
+//   [ts.SyntaxKind.ReturnStatement]: ts.ReturnStatement
+//   [ts.SyntaxKind.CallExpression]: ts.CallExpression
+//   [ts.SyntaxKind.PropertyAssignment]: ts.PropertyAssignment
+//   [ts.SyntaxKind.ObjectLiteralExpression]: ts.ObjectLiteralExpression
+//   [ts.SyntaxKind.Identifier]: ts.Identifier
+//   [ts.SyntaxKind.ImportDeclaration]: ts.ImportDeclaration
+// }
+
+export function findNodesOfKind(
   node: ts.Node,
-  kind: T,
+  kind: ts.SyntaxKind.CallExpression,
   sourceFile?: ts.SourceFile
-): Array<ts.Node> {
+): Array<ts.CallExpression>;
+export function findNodesOfKind(
+  node: ts.Node,
+  kind: ts.SyntaxKind.PropertyAssignment,
+  sourceFile?: ts.SourceFile
+): Array<ts.PropertyAssignment>;
+export function findNodesOfKind(
+  node: ts.Node,
+  kind: ts.SyntaxKind.ObjectLiteralExpression,
+  sourceFile?: ts.SourceFile
+): Array<ts.ObjectLiteralExpression>;
+export function findNodesOfKind(
+  node: ts.Node,
+  kind: ts.SyntaxKind.Identifier,
+  sourceFile?: ts.SourceFile
+): Array<ts.Identifier>;
+export function findNodesOfKind(
+  node: ts.Node,
+  kind: ts.SyntaxKind.ImportDeclaration,
+  sourceFile?: ts.SourceFile
+): Array<ts.ImportDeclaration>;
+export function findNodesOfKind(
+  node: ts.Node,
+  kind: ts.SyntaxKind.ReturnStatement,
+  sourceFile?: ts.SourceFile
+): Array<ts.ReturnStatement>;
+export function findNodesOfKind(
+  node: ts.Node,
+  kind: number,
+  sourceFile?: ts.SourceFile
+): Array<unknown> {
   const children = node.getChildren(sourceFile);
   return children.flatMap(child => {
     let result = [];
@@ -19,70 +58,4 @@ export function findNodesOfKind<T extends ts.SyntaxKind>(
       result = result.concat(findNodesOfKind(child, kind, sourceFile));
     return result;
   });
-}
-
-export function findReturnNodes(
-  node: ts.Node,
-  sourceFile?: ts.SourceFile
-): Array<ts.ReturnStatement> {
-  return findNodesOfKind(
-    node,
-    ts.SyntaxKind.ReturnStatement,
-    sourceFile
-  ) as Array<ts.ReturnStatement>;
-}
-
-export function findCallExpressions(
-  node: ts.Node,
-  sourceFile?: ts.SourceFile
-): Array<ts.CallExpression> {
-  return findNodesOfKind(
-    node,
-    ts.SyntaxKind.CallExpression,
-    sourceFile
-  ) as Array<ts.CallExpression>;
-}
-
-export function findPropertyAssignments(
-  node: ts.Node,
-  sourceFile?: ts.SourceFile
-): Array<ts.PropertyAssignment> {
-  return findNodesOfKind(
-    node,
-    ts.SyntaxKind.PropertyAssignment,
-    sourceFile
-  ) as Array<ts.PropertyAssignment>;
-}
-
-export function findObjectLiteralExpressions(
-  node: ts.Node,
-  sourceFile?: ts.SourceFile
-): Array<ts.ObjectLiteralExpression> {
-  return findNodesOfKind(
-    node,
-    ts.SyntaxKind.ObjectLiteralExpression,
-    sourceFile
-  ) as Array<ts.ObjectLiteralExpression>;
-}
-
-export function findIdentifiers(
-  node: ts.Node,
-  sourceFile?: ts.SourceFile
-): Array<ts.Identifier> {
-  return findNodesOfKind(
-    node,
-    ts.SyntaxKind.Identifier,
-    sourceFile
-  ) as Array<ts.Identifier>;
-}
-
-export function findImportDeclarations(
-  node: ts.Node,
-  sourceFile?: ts.SourceFile
-): Array<ts.ImportDeclaration> {
-  return findNodesOfKind(
-    node,
-    ts.SyntaxKind.ImportDeclaration,
-    sourceFile
-  ) as Array<ts.ImportDeclaration>;
 }
