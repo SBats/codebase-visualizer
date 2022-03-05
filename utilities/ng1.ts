@@ -55,22 +55,20 @@ export function findTemplatePathFromImport(
   source: ts.SourceFile
 ): string | undefined {
   const content = getFileContentFromSource(source);
-  const imports = content
-    .getChildren(source)
-    .filter(child => child.kind === ts.SyntaxKind.ImportDeclaration)
-    .map(importDeclaration => {
-      const parts = importDeclaration.getChildren(source);
-      const identifier = parts
-        .find(part => part.kind === ts.SyntaxKind.ImportClause)
-        ?.getText(source);
-      const templatePath = parts
-        .find(part => part.kind === ts.SyntaxKind.StringLiteral)
-        ?.getText(source)
-        .replaceAll("'", '');
-      return { identifier, templatePath };
-    });
-  return imports.find(fileImport => fileImport.identifier === importName)
-    ?.templatePath;
+  const templateImport = findNodesOfKind(
+    content,
+    ts.SyntaxKind.ImportDeclaration,
+    source
+  ).find(declaration =>
+    findNodesOfKind(declaration, ts.SyntaxKind.Identifier, source).find(
+      identifier => identifier.getText(source) === importName
+    )
+  );
+  return templateImport
+    ?.getChildren(source)
+    .find(child => ts.isStringLiteral(child))
+    ?.getText(source)
+    .replaceAll("'", '');
 }
 
 export function extractTemplateFromAngularDeclaration(
@@ -191,106 +189,113 @@ export function extractComponentNodeFromAngularDeclaration(
   return components;
 }
 
+export function getTemplateFromValue(
+  templateValue: ts.Node,
+  source: ts.SourceFile
+): TemplateDefinition | undefined {
+  // Reference to html file
+  if (ts.isIdentifier(templateValue)) {
+    const content = findTemplatePathFromImport(
+      templateValue.getText(source),
+      source
+    );
+    return content ? { content, type: TemplateType.FILE_REF } : undefined;
+  }
+
+  // Inline Template
+  return {
+    content: templateValue.getFullText(source),
+    type: TemplateType.TEMPLATE_STRING,
+  };
+}
+
+export function getTemplateValueFromPropertyAssignment(
+  templateAssignment: ts.PropertyAssignment,
+  source: ts.SourceFile
+): ts.Node | undefined {
+  return templateAssignment
+    .getChildren(source)
+    .find(
+      child =>
+        ts.isStringLiteral(child) ||
+        ts.isNoSubstitutionTemplateLiteral(child) ||
+        ts.isTemplateExpression(child) ||
+        (ts.isIdentifier(child) && child.getText(source) !== 'template')
+    );
+}
+
+export function getUrlValueFromPropertyAssignment(
+  urlAssignment: ts.PropertyAssignment,
+  source: ts.SourceFile
+): string | undefined {
+  return urlAssignment
+    .getChildren(source)
+    .find(child => ts.isStringLiteral(child))
+    ?.getFullText(source);
+}
+
+export function getPropertyAssignmentByName(
+  expression: ts.ObjectLiteralExpression,
+  name: string,
+  source: ts.SourceFile
+): ts.PropertyAssignment | undefined {
+  return findNodesOfKind(
+    expression,
+    ts.SyntaxKind.PropertyAssignment,
+    source
+  ).find(
+    assignment =>
+      ts.isIdentifier(assignment.name) && assignment.name.escapedText === name
+  );
+}
+
+export function getChildrenFromTemplate(
+  template: TemplateDefinition,
+  filePath: string
+): FlattenNode[] {
+  const folderPath = path.dirname(filePath);
+
+  return template.type === TemplateType.FILE_REF
+    ? getHtmlChildrenOfFile(path.join(folderPath, template.content))
+    : getHtmlChildrenOfString(template.content);
+}
+
 export function extractComponentsFromAngularRoute(
   source: ts.SourceFile,
   filePath: string
 ): RouteInfo[] {
   const content = getFileContentFromSource(source);
-  const folderPath = path.dirname(filePath);
 
-  const routesDeclarations = findNodesOfKind(
+  return findNodesOfKind(
     content,
     ts.SyntaxKind.ObjectLiteralExpression,
     source
-  )
-    .filter(expression =>
-      findNodesOfKind(
-        expression,
-        ts.SyntaxKind.PropertyAssignment,
-        source
-      ).find(
-        assignment =>
-          ts.isIdentifier(assignment.name) &&
-          assignment.name.escapedText === 'url'
-      )
-    )
-    .map(expression => {
-      const urlAssignment = findNodesOfKind(
-        expression,
-        ts.SyntaxKind.PropertyAssignment,
-        source
-      ).find(
-        assignment =>
-          ts.isIdentifier(assignment.name) &&
-          assignment.name.escapedText === 'url'
-      );
-      const url = urlAssignment
-        ?.getChildren(source)
-        .find(child => ts.isStringLiteral(child))
-        ?.getFullText(source);
+  ).reduce<RouteInfo[]>((routes, expression) => {
+    const urlAssignment = getPropertyAssignmentByName(
+      expression,
+      'url',
+      source
+    );
+    const templateAssignment = getPropertyAssignmentByName(
+      expression,
+      'template',
+      source
+    );
+    if (!urlAssignment || !templateAssignment) return routes;
 
-      const templateAssignment = findNodesOfKind(
-        expression,
-        ts.SyntaxKind.PropertyAssignment,
-        source
-      ).find(
-        assignment =>
-          ts.isIdentifier(assignment.name) &&
-          assignment.name.escapedText === 'template'
-      );
+    const url = getUrlValueFromPropertyAssignment(urlAssignment, source);
+    const templateValue = getTemplateValueFromPropertyAssignment(
+      templateAssignment,
+      source
+    );
 
-      const templateValue = templateAssignment
-        ?.getChildren(source)
-        .find(
-          child =>
-            ts.isStringLiteral(child) ||
-            ts.isNoSubstitutionTemplateLiteral(child) ||
-            ts.isTemplateExpression(child) ||
-            (ts.isIdentifier(child) && child.getText(source) !== 'template')
-        );
+    if (!templateValue) return routes;
+    const template = getTemplateFromValue(templateValue, source);
 
-      let template;
+    if (!url || !template) return routes;
 
-      // Reference to html file
-      if (templateValue && ts.isIdentifier(templateValue)) {
-        const templateImport = findNodesOfKind(
-          content,
-          ts.SyntaxKind.ImportDeclaration,
-          source
-        ).find(declaration =>
-          findNodesOfKind(declaration, ts.SyntaxKind.Identifier, source).find(
-            identifier =>
-              identifier.getText(source) === templateValue.getText(source)
-          )
-        );
-        const templatePath = templateImport
-          ?.getChildren(source)
-          .find(child => ts.isStringLiteral(child))
-          ?.getText(source)
-          .replaceAll("'", '');
+    const childElements = getChildrenFromTemplate(template, filePath);
 
-        template = {
-          content: templatePath,
-          type: TemplateType.FILE_REF,
-        };
-
-        // Inline Template
-      } else {
-        template = {
-          content: templateValue?.getFullText(source),
-          type: TemplateType.TEMPLATE_STRING,
-        };
-      }
-
-      return { url, template };
-    });
-
-  return routesDeclarations.flatMap(route => {
-    if (!route.url || !route.template.content) return [];
-    const childElements =
-      route.template.type === TemplateType.FILE_REF
-        ? getHtmlChildrenOfFile(path.join(folderPath, route.template.content))
-        : getHtmlChildrenOfString(route.template.content);
-    return { url: route.url, childElements };
-  });
+    return routes.concat([{ url, childElements }]);
+  }, []);
 }
