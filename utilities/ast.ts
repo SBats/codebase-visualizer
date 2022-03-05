@@ -13,8 +13,14 @@ export function getFileContentFromSource(source: ts.SourceFile): ts.Node {
 //   [ts.SyntaxKind.ObjectLiteralExpression]: ts.ObjectLiteralExpression
 //   [ts.SyntaxKind.Identifier]: ts.Identifier
 //   [ts.SyntaxKind.ImportDeclaration]: ts.ImportDeclaration
+//   [ts.SyntaxKind.Block]: ts.Block
 // }
 
+export function findNodesOfKind(
+  node: ts.Node,
+  kind: ts.SyntaxKind.Block,
+  sourceFile?: ts.SourceFile
+): Array<ts.Block>;
 export function findNodesOfKind(
   node: ts.Node,
   kind: ts.SyntaxKind.CallExpression,

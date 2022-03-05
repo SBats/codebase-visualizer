@@ -1,9 +1,5 @@
 import ts from 'typescript';
-import {
-  findNodesOfKind,
-  findReturnNodes,
-  getFileContentFromSource,
-} from './ast';
+import { findNodesOfKind, getFileContentFromSource } from './ast';
 import multiReturnFixture from '../fixtures/multi-return';
 
 test('Find 1 Block statement', () => {
@@ -23,5 +19,7 @@ test('Find 2 Return statements', () => {
     ts.ScriptTarget.ESNext
   );
   const node = getFileContentFromSource(sourceFile);
-  expect(findReturnNodes(node, sourceFile).length).toBe(2);
+  expect(
+    findNodesOfKind(node, ts.SyntaxKind.ReturnStatement, sourceFile).length
+  ).toBe(2);
 });
