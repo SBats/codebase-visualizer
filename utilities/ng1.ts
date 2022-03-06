@@ -7,7 +7,7 @@ import {
 } from './html';
 import { findNodesOfKind, getFileContentFromSource } from './ast';
 
-enum TemplateType {
+export enum TemplateType {
   FILE_REF = 0,
   TEMPLATE_STRING = 1,
 }
