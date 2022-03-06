@@ -3,9 +3,11 @@ import {
   extractTemplateFromAngularDeclaration,
   findTemplatePathFromImport,
   getTemplateFromValue,
+  getTemplateValueFromPropertyAssignment,
   TemplateType,
 } from './ng1';
 import importsFixture from '../fixtures/imports';
+import templateFromAssignmentFixture from '../fixtures/template-from-assignment';
 import templateStringFixture from '../fixtures/template-string';
 import templateFunctionFixture from '../fixtures/template-function';
 import templateIdentifierFixture from '../fixtures/template-identifier';
@@ -141,5 +143,55 @@ describe('getTemplateFromValue', () => {
       content: '<div>INLINE_STRING_TEMPLATE</div>',
       type: TemplateType.TEMPLATE_STRING,
     });
+  });
+});
+
+describe('getTemplateValueFromPropertyAssignment', () => {
+  let sourceFile: ts.SourceFile;
+  let assignations: ts.PropertyAssignment[];
+
+  beforeAll(() => {
+    sourceFile = ts.createSourceFile(
+      'TemplateFromAssignmentFixtureFile',
+      templateFromAssignmentFixture,
+      ts.ScriptTarget.ESNext
+    );
+    assignations = findNodesOfKind(
+      sourceFile,
+      ts.SyntaxKind.PropertyAssignment,
+      sourceFile
+    );
+  });
+
+  test("returns if it's an identifier", () => {
+    const expectedNode = assignations[0].getChildAt(2);
+    expect(
+      getTemplateValueFromPropertyAssignment(assignations[0], sourceFile)
+    ).toEqual(expectedNode);
+    expect(expectedNode.kind).toEqual(ts.SyntaxKind.Identifier);
+  });
+  test("returns if it's a string literal", () => {
+    const expectedNode = assignations[1].getChildAt(2);
+    expect(
+      getTemplateValueFromPropertyAssignment(assignations[1], sourceFile)
+    ).toEqual(expectedNode);
+    expect(expectedNode.kind).toEqual(ts.SyntaxKind.StringLiteral);
+  });
+
+  test("returns if it's a template string", () => {
+    const expectedNode = assignations[2].getChildAt(2);
+    expect(
+      getTemplateValueFromPropertyAssignment(assignations[2], sourceFile)
+    ).toEqual(expectedNode);
+    expect(expectedNode.kind).toEqual(
+      ts.SyntaxKind.NoSubstitutionTemplateLiteral
+    );
+  });
+  test("returns if it's a template string with substitution", () => {
+    const expectedNode = assignations[3].getChildAt(2);
+    expect(
+      getTemplateValueFromPropertyAssignment(assignations[3], sourceFile)
+    ).toEqual(expectedNode);
+    expect(expectedNode.kind).toEqual(ts.SyntaxKind.TemplateExpression);
   });
 });
