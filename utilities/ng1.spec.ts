@@ -4,6 +4,7 @@ import {
   findTemplatePathFromImport,
   getTemplateFromValue,
   getTemplateValueFromPropertyAssignment,
+  getUrlValueFromPropertyAssignment,
   TemplateType,
 } from './ng1';
 import importsFixture from '../fixtures/imports';
@@ -13,6 +14,7 @@ import templateFunctionFixture from '../fixtures/template-function';
 import templateIdentifierFixture from '../fixtures/template-identifier';
 import templateValueFixture from '../fixtures/template-value';
 import { findNodesOfKind, getFileContentFromSource } from './ast';
+import urlFromAssignment from '../fixtures/url-from-assignment';
 
 describe('findTemplatePathFromImport', () => {
   test('Find a relative path', () => {
@@ -210,13 +212,33 @@ describe('getTemplateValueFromPropertyAssignment', () => {
   });
 });
 
+describe('getUrlValueFromPropertyAssignment', () => {
+  let sourceFile: ts.SourceFile;
+  let assignations: ts.PropertyAssignment[];
+
+  beforeAll(() => {
+    sourceFile = ts.createSourceFile(
+      'UrlFromAssignmentFile',
+      urlFromAssignment,
+      ts.ScriptTarget.ESNext
+    );
+
+    assignations = findNodesOfKind(
+      sourceFile,
+      ts.SyntaxKind.PropertyAssignment,
+      sourceFile
     );
   });
-  test("returns if it's a template string with substitution", () => {
-    const expectedNode = assignations[3].getChildAt(2);
+
+  test('returns the url value', () => {
     expect(
-      getTemplateValueFromPropertyAssignment(assignations[3], sourceFile)
-    ).toEqual(expectedNode);
-    expect(expectedNode.kind).toEqual(ts.SyntaxKind.TemplateExpression);
+      getUrlValueFromPropertyAssignment(assignations[0], sourceFile)
+    ).toEqual('/test');
+  });
+
+  test('returns undefined if url value is not usable', () => {
+    expect(
+      getUrlValueFromPropertyAssignment(assignations[1], sourceFile)
+    ).toEqual(undefined);
   });
 });
