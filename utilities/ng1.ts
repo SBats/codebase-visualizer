@@ -231,7 +231,8 @@ export function getUrlValueFromPropertyAssignment(
   return urlAssignment
     .getChildren(source)
     .find(child => ts.isStringLiteral(child))
-    ?.getFullText(source);
+    ?.getText(source)
+    .slice(1, -1);
 }
 
 export function getPropertyAssignmentByName(
