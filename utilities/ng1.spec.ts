@@ -2,11 +2,13 @@ import ts from 'typescript';
 import {
   extractTemplateFromAngularDeclaration,
   findTemplatePathFromImport,
+  getPropertyAssignmentByName,
   getTemplateFromValue,
   getTemplateValueFromPropertyAssignment,
   getUrlValueFromPropertyAssignment,
   TemplateType,
 } from './ng1';
+import propertyAssignmentByNameFixture from '../fixtures/property-assignment-by-name';
 import importsFixture from '../fixtures/imports';
 import templateFromAssignmentFixture from '../fixtures/template-from-assignment';
 import templateStringFixture from '../fixtures/template-string';
@@ -240,5 +242,40 @@ describe('getUrlValueFromPropertyAssignment', () => {
     expect(
       getUrlValueFromPropertyAssignment(assignations[1], sourceFile)
     ).toEqual(undefined);
+  });
+});
+
+describe('getPropertyAssignmentByName', () => {
+  let sourceFile: ts.SourceFile;
+  let expression: ts.ObjectLiteralExpression;
+
+  beforeAll(() => {
+    sourceFile = ts.createSourceFile(
+      'PropertyAssignmentByNameFixtureFile',
+      propertyAssignmentByNameFixture,
+      ts.ScriptTarget.ESNext
+    );
+
+    [expression] = findNodesOfKind(
+      sourceFile,
+      ts.SyntaxKind.ObjectLiteralExpression,
+      sourceFile
+    );
+  });
+
+  test('find url assignment', () => {
+    expect(
+      getPropertyAssignmentByName(expression, 'url', sourceFile)?.getText(
+        sourceFile
+      )
+    ).toContain('urlValue');
+  });
+
+  test('find template assignment', () => {
+    expect(
+      getPropertyAssignmentByName(expression, 'template', sourceFile)?.getText(
+        sourceFile
+      )
+    ).toContain('templateValue');
   });
 });
