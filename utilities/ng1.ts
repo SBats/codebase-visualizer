@@ -204,7 +204,7 @@ export function getTemplateFromValue(
 
   // Inline Template
   return {
-    content: templateValue.getFullText(source),
+    content: templateValue.getFullText(source).trim().slice(1, -1),
     type: TemplateType.TEMPLATE_STRING,
   };
 }
