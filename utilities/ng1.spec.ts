@@ -152,6 +152,7 @@ describe('getTemplateValueFromPropertyAssignment', () => {
       templateFromAssignmentFixture,
       ts.ScriptTarget.ESNext
     );
+
     assignations = findNodesOfKind(
       sourceFile,
       ts.SyntaxKind.PropertyAssignment,
@@ -159,28 +160,56 @@ describe('getTemplateValueFromPropertyAssignment', () => {
     );
   });
 
-  test("returns if it's an identifier", () => {
-    const expectedNode = assignations[0].getChildAt(2);
+  test("returns value if it's an identifier", () => {
     expect(
-      getTemplateValueFromPropertyAssignment(assignations[0], sourceFile)
-    ).toEqual(expectedNode);
-    expect(expectedNode.kind).toEqual(ts.SyntaxKind.Identifier);
-  });
-  test("returns if it's a string literal", () => {
-    const expectedNode = assignations[1].getChildAt(2);
-    expect(
-      getTemplateValueFromPropertyAssignment(assignations[1], sourceFile)
-    ).toEqual(expectedNode);
-    expect(expectedNode.kind).toEqual(ts.SyntaxKind.StringLiteral);
+      getTemplateValueFromPropertyAssignment(
+        assignations[0],
+        sourceFile
+      )?.getText(sourceFile)
+    ).toEqual('htmlFile');
   });
 
-  test("returns if it's a template string", () => {
-    const expectedNode = assignations[2].getChildAt(2);
+  test("returns value if it's a string literal", () => {
     expect(
-      getTemplateValueFromPropertyAssignment(assignations[2], sourceFile)
-    ).toEqual(expectedNode);
-    expect(expectedNode.kind).toEqual(
-      ts.SyntaxKind.NoSubstitutionTemplateLiteral
+      getTemplateValueFromPropertyAssignment(
+        assignations[1],
+        sourceFile
+      )?.getText(sourceFile)
+    ).toEqual("'<div>INLINE_STRING_TEMPLATE</div>'");
+  });
+
+  test("returns value if it's a template string", () => {
+    expect(
+      getTemplateValueFromPropertyAssignment(
+        assignations[2],
+        sourceFile
+      )?.getText(sourceFile)
+    ).toEqual(`\`
+    <div>TEMPLATE_STRING_TEMPLATE</div>
+  \``);
+  });
+
+  test("returns value if it's a template string with substitution", () => {
+    expect(
+      getTemplateValueFromPropertyAssignment(
+        assignations[3],
+        sourceFile
+      )?.getText(sourceFile)
+    ).toEqual(`\`
+    <div>\${TEMPLATE_STRING_INTERPOLATION_TEMPLATE}</div>
+  \``);
+  });
+
+  test('returns undefined if template value is not usable', () => {
+    expect(
+      getTemplateValueFromPropertyAssignment(
+        assignations[4],
+        sourceFile
+      )?.getText(sourceFile)
+    ).toEqual(undefined);
+  });
+});
+
     );
   });
   test("returns if it's a template string with substitution", () => {

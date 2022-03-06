@@ -17,4 +17,7 @@ const d = {
     <div>\${TEMPLATE_STRING_INTERPOLATION_TEMPLATE}</div>
   \`,
 }
+const e = {
+  template: null
+}
 `;
