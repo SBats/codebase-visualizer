@@ -117,8 +117,8 @@ describe('getTemplateFromValue', () => {
 
   beforeAll(() => {
     sourceFile = ts.createSourceFile(
-      'TemplateFromAssignmentFixtureFile',
-      templateFromAssignmentFixture,
+      'TemplateValueFixtureFile',
+      templateValueFixture,
       ts.ScriptTarget.ESNext
     );
     assignations = findNodesOfKind(
