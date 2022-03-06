@@ -110,35 +110,31 @@ describe('extractTemplateFromAngularDeclaration', () => {
 });
 
 describe('getTemplateFromValue', () => {
-  test('returns a reference to html file', () => {
-    const sourceFile = ts.createSourceFile(
-      'TemplateValueFixtureFile',
-      templateValueFixture,
+  let sourceFile: ts.SourceFile;
+  let assignations: ts.PropertyAssignment[];
+
+  beforeAll(() => {
+    sourceFile = ts.createSourceFile(
+      'TemplateFromAssignmentFixtureFile',
+      templateFromAssignmentFixture,
       ts.ScriptTarget.ESNext
     );
-    const assignation = findNodesOfKind(
+    assignations = findNodesOfKind(
       sourceFile,
       ts.SyntaxKind.PropertyAssignment,
       sourceFile
     );
+  });
+
+  test('returns a reference to html file', () => {
     expect(
-      getTemplateFromValue(assignation[0].getChildAt(2), sourceFile)
+      getTemplateFromValue(assignations[0].getChildAt(2), sourceFile)
     ).toEqual({ content: './template.html', type: TemplateType.FILE_REF });
   });
 
   test('returns the template string', () => {
-    const sourceFile = ts.createSourceFile(
-      'TemplateValueFixtureFile',
-      templateValueFixture,
-      ts.ScriptTarget.ESNext
-    );
-    const assignation = findNodesOfKind(
-      sourceFile,
-      ts.SyntaxKind.PropertyAssignment,
-      sourceFile
-    );
     expect(
-      getTemplateFromValue(assignation[1].getChildAt(2), sourceFile)
+      getTemplateFromValue(assignations[1].getChildAt(2), sourceFile)
     ).toEqual({
       content: '<div>INLINE_STRING_TEMPLATE</div>',
       type: TemplateType.TEMPLATE_STRING,
