@@ -2,12 +2,14 @@ import ts from 'typescript';
 import {
   extractTemplateFromAngularDeclaration,
   findTemplatePathFromImport,
+  getComponentNameIfComponent,
   getPropertyAssignmentByName,
   getTemplateFromValue,
   getTemplateValueFromPropertyAssignment,
   getUrlValueFromPropertyAssignment,
   TemplateType,
 } from './ng1';
+import ng1ComponentFixture from '../fixtures/ng1-component';
 import propertyAssignmentByNameFixture from '../fixtures/property-assignment-by-name';
 import importsFixture from '../fixtures/imports';
 import templateFromAssignmentFixture from '../fixtures/template-from-assignment';
@@ -17,6 +19,31 @@ import templateIdentifierFixture from '../fixtures/template-identifier';
 import templateValueFixture from '../fixtures/template-value';
 import { findNodesOfKind, getFileContentFromSource } from './ast';
 import urlFromAssignment from '../fixtures/url-from-assignment';
+
+describe('getComponentNameIfComponent', () => {
+  let sourceFile: ts.SourceFile;
+  let callExpressions: ts.CallExpression[];
+
+  beforeEach(() => {
+    sourceFile = ts.createSourceFile(
+      'Ng1ComponentFixtureFile',
+      ng1ComponentFixture,
+      ts.ScriptTarget.ESNext
+    );
+
+    callExpressions = findNodesOfKind(
+      sourceFile,
+      ts.SyntaxKind.CallExpression,
+      sourceFile
+    );
+  });
+
+  test('finds component name if present', () => {
+    expect(getComponentNameIfComponent(callExpressions[0], sourceFile)).toEqual(
+      'componentName'
+    );
+  });
+});
 
 describe('findTemplatePathFromImport', () => {
   test('Find a relative path', () => {
