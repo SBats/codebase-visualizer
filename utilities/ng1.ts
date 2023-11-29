@@ -5,7 +5,11 @@ import {
   FlattenNode,
   getHtmlChildrenOfString,
 } from './html';
-import { findNodesOfKind, getFileContentFromSource } from './ast';
+import {
+  findChildOfKind,
+  findNodesOfKind,
+  getFileContentFromSource,
+} from './ast';
 
 export enum TemplateType {
   FILE_REF = 0,
@@ -299,4 +303,123 @@ export function extractComponentsFromAngularRoute(
 
     return routes.concat([{ url, childElements }]);
   }, []);
+}
+
+export function findOptionsVariable(
+  optionsNode: ts.Identifier,
+  source: ts.SourceFile
+): ts.ObjectLiteralExpression | undefined {
+  const varDeclaration = findNodesOfKind(
+    source,
+    ts.SyntaxKind.VariableDeclaration,
+    source
+  ).find(
+    declaration =>
+      declaration.getChildAt(0).getText(source) === optionsNode.getText(source)
+  );
+
+  return !varDeclaration
+    ? undefined
+    : findChildOfKind(
+        varDeclaration,
+        ts.SyntaxKind.ObjectLiteralExpression,
+        source
+      );
+}
+
+export function getComponentArguments(
+  declaration: ts.CallExpression,
+  source: ts.SourceFile
+): [
+  ts.StringLiteral | undefined,
+  ts.ObjectLiteralExpression | ts.Identifier | undefined
+] {
+  const componentArguments = declaration
+    .getChildren(source)
+    .find(node => node.kind === ts.SyntaxKind.SyntaxList);
+
+  if (!componentArguments) return [undefined, undefined];
+
+  const componentName = findChildOfKind(
+    componentArguments,
+    ts.SyntaxKind.StringLiteral,
+    source
+  );
+  const componentOptionsRef = findChildOfKind(
+    componentArguments,
+    ts.SyntaxKind.Identifier,
+    source
+  );
+  const componentOptionsExpression = findChildOfKind(
+    componentArguments,
+    ts.SyntaxKind.ObjectLiteralExpression,
+    source
+  );
+  const componentsOptions = componentOptionsRef || componentOptionsExpression;
+
+  if (!componentName || componentsOptions) return [undefined, undefined];
+
+  return [componentName, componentsOptions];
+}
+
+export function extractComponentsFromAngularComponents(
+  source: ts.SourceFile,
+  filePath: string
+): ComponentInfo[] {
+  const content = getFileContentFromSource(source);
+
+  const componentsDeclarations = findNodesOfKind(
+    content,
+    ts.SyntaxKind.CallExpression,
+    source
+  ).filter(expression =>
+    findNodesOfKind(
+      expression,
+      ts.SyntaxKind.PropertyAccessExpression,
+      source
+    )[0]
+      .getText(source)
+      .includes('.component')
+  );
+  return componentsDeclarations.reduce<ComponentInfo[]>(
+    (components, declaration) => {
+      const [nameNode, optionsNode] = getComponentArguments(
+        declaration,
+        source
+      );
+      if (!nameNode || !optionsNode) return components;
+
+      const name = nameNode.getText(source);
+      const options = ts.isIdentifier(optionsNode)
+        ? findOptionsVariable(optionsNode, source)
+        : optionsNode;
+
+      if (!name || !options) return components;
+
+      const templateAssignment = getPropertyAssignmentByName(
+        options,
+        'template',
+        source
+      );
+      if (!templateAssignment) return components;
+
+      // TODO: Manage multiple template values
+      const templateValue = getTemplateValueFromPropertyAssignment(
+        templateAssignment,
+        source
+      );
+
+      if (!templateValue) return components;
+      const template = getTemplateFromValue(templateValue, source);
+
+      if (!template) return components;
+
+      const childElements = getChildrenFromTemplate(template, filePath);
+
+      if (name && childElements) components.push({ name, childElements });
+
+      return components;
+    },
+    []
+  );
 }

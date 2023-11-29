@@ -16,6 +16,39 @@ export function getFileContentFromSource(source: ts.SourceFile): ts.Node {
 //   [ts.SyntaxKind.Block]: ts.Block
 // }
 
+export function findChildOfKind(
+  node: ts.Node,
+  kind: ts.SyntaxKind.Identifier,
+  sourceFile?: ts.SourceFile
+): ts.Identifier | undefined;
+export function findChildOfKind(
+  node: ts.Node,
+  kind: ts.SyntaxKind.StringLiteral,
+  sourceFile?: ts.SourceFile
+): ts.StringLiteral | undefined;
+export function findChildOfKind(
+  node: ts.Node,
+  kind: ts.SyntaxKind.ObjectLiteralExpression,
+  sourceFile?: ts.SourceFile
+): ts.ObjectLiteralExpression | undefined;
+export function findChildOfKind(
+  node: ts.Node,
+  kind: number,
+  sourceFile?: ts.SourceFile
+): unknown | undefined {
+  return node.getChildren(sourceFile).find(child => child.kind === kind);
+}
+
+export function findNodesOfKind(
+  node: ts.Node,
+  kind: ts.SyntaxKind.VariableDeclaration,
+  sourceFile?: ts.SourceFile
+): Array<ts.VariableDeclaration>;
+export function findNodesOfKind(
+  node: ts.Node,
+  kind: ts.SyntaxKind.PropertyAccessExpression,
+  sourceFile?: ts.SourceFile
+): Array<ts.PropertyAccessExpression>;
 export function findNodesOfKind(
   node: ts.Node,
   kind: ts.SyntaxKind.Block,
